@@ -1,44 +1,73 @@
-using System.Net.Http.Headers;
-
 namespace HeaderStats;
 
 public class ServerStats
 {
-    private readonly List<HttpResponseHeaders> _headers;
-    public readonly Dictionary<string, double> Repartition = new();
-
-    public ServerStats(List<HttpResponseHeaders> headers)
+    public Dictionary<string, int> ComputeServerHeaderRepartition(List<WebsiteInfo> websiteInfoList)
     {
-        _headers = headers;
-        Repartition.Add("Unknown", 0);
-    }
-
-    public void ComputeRepartition()
-    {
-        foreach (var key in _headers.Select(header => header.Server.ToString()))
+        var repartition = new Dictionary<string, int>();
+        foreach (var websiteInfo in websiteInfoList)
         {
+            var key = websiteInfo.ServerHeader;
             if (String.IsNullOrEmpty(key.Trim()))
             {
-                Repartition["Unknown"] += 1;
+                repartition["Unknown"] += 1;
                 continue;
             }
 
-            if (Repartition.ContainsKey(key))
+            if (repartition.ContainsKey(key))
             {
-                Repartition[key] += 1;
+                repartition[key] += 1;
             }
             else
             {
-                Repartition.Add(key, 1);
+                repartition.Add(key, 1);
             }
         }
+
+        return repartition;
     }
 
-    public void PrintRepartition()
+    public Dictionary<string, string> ComputeLastModifiedHeaderMap(List<WebsiteInfo> websiteInfoList)
     {
-        foreach (var server in Repartition)
+        var lastModifiedHeaderMap = new Dictionary<string, string>();
+        foreach (var websiteInfo in websiteInfoList)
+        {
+            var key = websiteInfo.Url;
+            var value = websiteInfo.LastModifiedHeader;
+            lastModifiedHeaderMap[key] = value;
+        }
+
+        return lastModifiedHeaderMap;
+    }
+
+    public void PrintRepartition(Dictionary<string, int> repartition)
+    {
+        foreach (var server in repartition)
         {
             Console.WriteLine($"{server.Key} : {server.Value}");
         }
+    }
+
+    public async Task<List<WebsiteInfo>> FetchInfo(string[] urls, HttpClient sharedClient)
+    {
+        var websiteInfos = new List<WebsiteInfo>();
+        await Parallel.ForEachAsync(urls, async (website, token) =>
+        {
+            try
+            {
+                using var response = await sharedClient.GetAsync(website, token);
+                Console.WriteLine($"{website}: {response.StatusCode} - {response.Headers.Server}");
+                var serverHeader = response.Headers.Server.ToString();
+                if (String.IsNullOrEmpty(serverHeader.Trim()))
+                    serverHeader = "N/A";
+                var lastModifiedHeader = response.Content.Headers.LastModified?.ToString("o") ?? "N/A";
+                websiteInfos.Add(new WebsiteInfo(website, serverHeader, lastModifiedHeader));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{website}: {ex.Message}");
+            }
+        });
+        return websiteInfos;
     }
 }

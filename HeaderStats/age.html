@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Website stats</title>
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+          integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" rel="stylesheet">
+</head>
+<body>
+<nav class="nav">
+    <a class="nav-link" href="http://localhost:5009/">Server</a>
+    <a class="nav-link" href="http://localhost:5009/age">Age</a>
+</nav>
+<div class="d-flex container flex-column align-items-center justify-content-center">
+    <h1 class="my-5">Page age stats</h1>
+    <h2>Website: d.android.com</h2>
+    <div class="d-flex col-12 justify-items-center">
+        <canvas id="myChart"></canvas>
+    </div>
+    <table class="table" id="page-table">
+        <thead>
+        <tr>
+            <th scope="col">Page</th>
+            <th scope="col">Last modified</th>
+        </tr>
+        </thead>
+        <tbody id="page-list">
+        </tbody>
+    </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+            crossorigin="anonymous"></script>
+<script>
+    fetch("api/stats/modified")
+        .then(response => response.json())
+        .then(ages => {
+            const agesFiltered = new Map();
+            Object.keys(ages).map(urlString => {
+                agesFiltered.set(`${urlString.split("?")[0]}`, Math.floor((Date.now() - Date.parse(ages[urlString])) / 1000 / 60 / 60 / 24))
+            })
+            agesFiltered.forEach((value, key) => {
+                const pageList = document.getElementById("page-list");
+                const row = document.createElement("tr");
+                const page = document.createElement("td");
+                const age = document.createElement("td");
+                page.innerText = new URL(key).pathname;
+                age.innerText = value + " days"
+                row.appendChild(page);
+                row.appendChild(age);
+                pageList.appendChild(row);
+            })
+            return agesFiltered;
+        })
+        .then(agesFiltered => {
+            const ctx = document.getElementById('myChart');
+            const labels = [...agesFiltered.keys()].map(url => new URL(url).pathname);
+            const data = [...agesFiltered.values()];
+            console.log(labels);
+
+            const average = data.reduce((a, b) => a + b, 0) / data.length;
+            const n = data.length;
+            const standardDeviation = Math.sqrt(data.map(x => Math.pow(x - average, 2)).reduce((a, b) => a + b) / n);
+
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Age of pages in days',
+                        data: data,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            display: false,
+                        },
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    borderColor: 'rgb(100, 149, 237)',
+                                    borderDash: [6, 6],
+                                    borderDashOffset: 0,
+                                    borderWidth: 3,
+                                    label: {
+                                        display: true,
+                                        backgroundColor: 'rgb(100, 149, 237)',
+                                        content: 'Average: ' + average.toFixed(2)
+                                    },
+                                    scaleID: 'y',
+                                    value: average
+                                },
+                                line2: {
+                                    type: 'line',
+                                    borderColor: 'rgba(102, 102, 102, 0.5)',
+                                    borderDash: [6, 6],
+                                    borderDashOffset: 0,
+                                    borderWidth: 3,
+                                    label: {
+                                        display: true,
+                                        backgroundColor: 'rgba(102, 102, 102, 0.5)',
+                                        color: 'black',
+                                        content: (average + standardDeviation).toFixed(2),
+                                        position: 'start',
+                                        rotation: -90,
+                                        yAdjust: -28
+                                    },
+                                    scaleID: 'y',
+                                    value: average + standardDeviation
+                                },
+                                line3: {
+                                    type: 'line',
+                                    borderColor: 'rgba(102, 102, 102, 0.5)',
+                                    borderDash: [6, 6],
+                                    borderDashOffset: 0,
+                                    borderWidth: 3,
+                                    label: {
+                                        display: true,
+                                        backgroundColor: 'rgba(102, 102, 102, 0.5)',
+                                        color: 'black',
+                                        content: (average - standardDeviation).toFixed(2),
+                                        position: 'end',
+                                        rotation: 90,
+                                        yAdjust: 28
+                                    },
+                                    scaleID: 'y',
+                                    value: average - standardDeviation
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+        })
+</script>
+</body>
+</html>

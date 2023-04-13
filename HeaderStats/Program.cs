@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using HeaderStats;
 
 HttpClient sharedClient = new();
@@ -89,24 +88,33 @@ var websites = new[]
     "https://www.pole-emploi.fr/",
     "https://www.gouv.fr/"
 };
-var headers = new List<HttpResponseHeaders>();
-await Parallel.ForEachAsync(websites, async (website, token) =>
-{
-    try
-    {
-        using var response = await sharedClient.GetAsync(website, token);
-        Console.WriteLine($"{website}: {response.StatusCode} - {response.Headers.Server}");
-        headers.Add(response.Headers);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"{website}: {ex.Message}");
-    }
-});
 
-var serverStats = new ServerStats(headers);
-serverStats.ComputeRepartition();
-serverStats.PrintRepartition();
+
+var pages = new[]
+{
+    "https://developer.android.com/docs/quality-guidelines/build-for-billions/ui",
+    "https://developer.android.com/docs/quality-guidelines/car-app-quality",
+    "https://developer.android.com/docs/quality-guidelines/build-for-billions",
+    "https://developer.android.com/docs/quality-guidelines/large-screen-app-quality",
+    "https://developer.android.com/docs",
+    "https://developer.android.com/docs/quality-guidelines/wear-app-quality",
+    "https://developer.android.com/docs/quality-guidelines/build-for-billions/device-capacity",
+    "https://developer.android.com/docs/quality-guidelines/core-app-quality",
+    "https://developer.android.com/docs/quality-guidelines/build-for-billions/data-cost",
+    "https://developer.android.com/docs/quality-guidelines/tv-app-quality",
+    "https://developer.android.com/docs/quality-guidelines/build-for-billions/battery-consumption",
+    "https://developer.android.com/docs/quality-guidelines/build-for-billions/connectivity",
+    "https://developer.android.com/docs/quality-guidelines/2021/02"
+};
+
+var serverStats = new ServerStats();
+var headers = await serverStats.FetchInfo(websites, sharedClient);
+
+var serverHeaderStats = serverStats.ComputeServerHeaderRepartition(headers);
+serverStats.PrintRepartition(serverHeaderStats);
+
+var ageInfoList = await serverStats.FetchInfo(pages, sharedClient);
+var modifiedStats = serverStats.ComputeLastModifiedHeaderMap(ageInfoList);
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -117,7 +125,14 @@ app.MapGet("/", () =>
     return Results.Text(fileContent, "text/html"); // return the HTML file with a MIME type of text/html
 });
 
-app.MapGet("/api/stats", () => serverStats.Repartition);
+app.MapGet("/age", () =>
+{
+    var fileContent = File.ReadAllText("./age.html"); // read the contents of the HTML file
+    return Results.Text(fileContent, "text/html"); // return the HTML file with a MIME type of text/html
+});
+
+app.MapGet("/api/stats/server", () => serverHeaderStats);
+app.MapGet("/api/stats/modified", () => modifiedStats);
 
 
 app.Run();
