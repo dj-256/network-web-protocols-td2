@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Website stats</title>
+</head>
+<body>
+<div>
+    <canvas id="myChart"></canvas>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('myChart');
+    let labels;
+    let data;
+    fetch('http://localhost:5009/api/stats')
+        .then(response => response.json())
+        .then(stats => {
+            console.log(stats);
+            labels = Object.keys(stats);
+            data = Object.values(stats);
+        }).then(() => {
+
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Stats',
+                    data: data,
+                    borderWidth: 1
+                }]
+            },
+        })
+    });
+</script>
+</html>
