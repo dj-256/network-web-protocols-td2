@@ -1,15 +1,15 @@
+using System.Net.Http.Headers;
+
 namespace HeaderStats;
 
 public class WebsiteInfo
 {
-    public WebsiteInfo(string url, string serverHeader, string lastModifiedHeader)
+    public WebsiteInfo(string url, HttpResponseHeaders siteHeaders)
     {
         Url = url;
-        ServerHeader = serverHeader;
-        LastModifiedHeader = lastModifiedHeader;
+        SiteHeaders = siteHeaders;
     }
 
     public string Url { get; set; }
-    public string ServerHeader { get; set; }
-    public string LastModifiedHeader { get; set; }
+    public HttpResponseHeaders SiteHeaders { get; set; }
 }
