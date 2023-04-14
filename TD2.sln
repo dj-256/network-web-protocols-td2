@@ -2,6 +2,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeaderStats", "HeaderStats\HeaderStats.csproj", "{B88A8074-F0C9-47D4-BCC8-5C786FCA2FC3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerHeaderStats", "ServerHeaderStats\ServerHeaderStats.csproj", "{5C72EE1F-334D-44D4-B6D9-3E8D5158AFCD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgeStats", "AgeStats\AgeStats.csproj", "{4B59D457-1F2D-4A99-9ACE-57A6ADDDFEAC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +16,13 @@ Global
 		{B88A8074-F0C9-47D4-BCC8-5C786FCA2FC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B88A8074-F0C9-47D4-BCC8-5C786FCA2FC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B88A8074-F0C9-47D4-BCC8-5C786FCA2FC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C72EE1F-334D-44D4-B6D9-3E8D5158AFCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C72EE1F-334D-44D4-B6D9-3E8D5158AFCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C72EE1F-334D-44D4-B6D9-3E8D5158AFCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C72EE1F-334D-44D4-B6D9-3E8D5158AFCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B59D457-1F2D-4A99-9ACE-57A6ADDDFEAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B59D457-1F2D-4A99-9ACE-57A6ADDDFEAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B59D457-1F2D-4A99-9ACE-57A6ADDDFEAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B59D457-1F2D-4A99-9ACE-57A6ADDDFEAC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
