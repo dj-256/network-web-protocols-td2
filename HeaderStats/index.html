@@ -13,11 +13,12 @@
 </nav>
 <div class="d-flex container flex-column align-items-center justify-content-center">
     <h1 class="my-5">Server header stats</h1>
-    <div id="loading-indicator">Loading...</div>
+    <input accept=".txt" class="mb-3" id="file-selector" type="file">
+    <div class="d-none mt-3" id="loading-indicator">Loading...</div>
     <div class="d-flex col-6 justify-items-center">
         <canvas id="myChart"></canvas>
     </div>
-    <table class="table mt-5" id="website-table">
+    <table class="table mt-5 d-none" id="website-table">
         <thead>
         <tr>
             <th scope="col">Website</th>
@@ -33,145 +34,81 @@
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const websites = [
-        "https://www.amazon.com/",
-        "https://www.google.com/",
-        "https://www.youtube.com/",
-        "https://www.facebook.com/",
-        "https://www.wikipedia.org/",
-        "https://www.reddit.com/",
-        "https://www.twitter.com/",
-        "https://www.instagram.com/",
-        "https://www.linkedin.com/",
-        "https://www.netflix.com/",
-        "https://www.apple.com/",
-        "https://www.yahoo.com/",
-        "https://www.bing.com/",
-        "https://www.pinterest.com/",
-        "https://www.ebay.com/",
-        "https://www.microsoft.com/",
-        "https://www.cnn.com/",
-        "https://www.imdb.com/",
-        "https://www.nytimes.com/",
-        "https://www.github.com/",
-        "https://www.espn.com/",
-        "https://www.paypal.com/",
-        "https://www.tumblr.com/",
-        "https://www.quora.com/",
-        "https://www.huffpost.com/",
-        "https://www.nationalgeographic.com/",
-        "https://www.etsy.com/",
-        "https://www.weather.com/",
-        "https://www.foxnews.com/",
-        "https://www.nba.com/",
-        "https://www.cnbc.com/",
-        "https://www.bbc.com/",
-        "https://www.webmd.com/",
-        "https://www.bloomberg.com/",
-        "https://www.medicalnewstoday.com/",
-        "https://www.wsj.com/",
-        "https://www.techcrunch.com/",
-        "https://www.wired.com/",
-        "https://www.merriam-webster.com/",
-        "https://www.booking.com/",
-        "https://www.airbnb.com/",
-        "https://www.netflix.com/",
-        "https://www.hulu.com/",
-        "https://www.spotify.com/",
-        "https://www.soundcloud.com/",
-        "https://www.twitch.tv/",
-        "https://www.vimeo.com/",
-        "https://www.dribbble.com/",
-        "https://www.behance.net/",
-        "https://www.medium.com/",
-        "https://www.stackoverflow.com/",
-        "https://www.github.io/",
-        "https://www.codepen.io/",
-        "https://www.lemonde.fr/",
-        "https://www.liberation.fr/",
-        "https://www.lefigaro.fr/",
-        "https://www.lequipe.fr/",
-        "https://www.francetvinfo.fr/",
-        "https://www.cdiscount.com/",
-        "https://www.fnac.com/",
-        "https://www.darty.com/",
-        "https://www.laredoute.fr/",
-        "https://www.vinted.fr/",
-        "https://www.alloresto.fr/",
-        "https://www.ouibus.com/",
-        "https://www.sncf.com/",
-        "https://www.ledauphine.com/",
-        "https://www.laposte.fr/",
-        "https://www.lcl.fr/",
-        "https://www.societegenerale.fr/",
-        "https://www.credit-agricole.fr/",
-        "https://www.banquepopulaire.fr/",
-        "https://www.caisse-epargne.fr/",
-        "https://www.orange.fr/",
-        "https://www.sfr.fr/",
-        "https://www.bouyguestelecom.fr/",
-        "https://www.larousse.fr/",
-        "https://www.franceinter.fr/",
-        "https://www.eurosport.fr/",
-        "https://www.journaldunet.com/",
-        "https://www.doctolib.fr/",
-        "https://www.pole-emploi.fr/",
-        "https://www.gouv.fr/"
-    ]
     const ctx = document.getElementById('myChart');
     let labels;
     let data;
-    fetch('http://localhost:5009/api/stats/server', {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(
-            websites
-        ),
-    })
-        .then(response => response.json())
-        .then(response => {
-            const stats = response.serverStats;
-            console.log(stats);
-            labels = Object.keys(stats);
-            data = Object.values(stats);
-            return response
-        }).then((response) => {
-        document.querySelector('#loading-indicator').classList.add('d-none');
-        const websiteList = document.getElementById('website-list');
-        const websiteTable = document.getElementById('website-table');
-        websiteTable.classList.remove('d-none');
-        Object.entries(response.serverStats).forEach((server, index) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
+    let websites;
+    let chart;
+    const fileSelector = document.getElementById('file-selector');
+
+    fileSelector.addEventListener('change', (event) => {
+        console.log("File selected")
+        if (chart) {
+            chart.destroy();
+        }
+        if (event.target.files.length === 0) return;
+        const fileList = event.target.files;
+        const reader = new FileReader();
+        reader.addEventListener('load', (event) => {
+            websites = event.target.result.split('\r').join('').split('\n');
+            onTrigger();
+        });
+        reader.readAsText(fileList[0]);
+    });
+
+    const onTrigger = () => {
+        document.querySelector('#loading-indicator').classList.remove('d-none');
+        fetch('http://localhost:5009/api/stats/server', {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(
+                websites
+            ),
+        })
+            .then(response => response.json())
+            .then(response => {
+                const stats = response.serverStats;
+                labels = Object.keys(stats);
+                data = Object.values(stats);
+                return response
+            }).then((response) => {
+            document.querySelector('#loading-indicator').classList.add('d-none');
+            const websiteList = document.getElementById('website-list');
+            websiteList.innerHTML = '';
+            const websiteTable = document.getElementById('website-table');
+            websiteTable.classList.remove('d-none');
+            Object.entries(response.serverStats).forEach((server, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
                     <td>${websites[index]}</td>
                     <td>${server}</td>
                 `;
-            websiteList.appendChild(row);
+                websiteList.appendChild(row);
+            })
         })
-    })
-        .then(() => {
-
-            new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Stats',
-                        data: data,
-                        borderWidth: 1
-                    }]
-            },
-            options: {
-                plugins: {
-                    legend: {
-                        display: false
+            .then(() => {
+                chart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Stats',
+                            data: data,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
                     }
-                }
-            }
-        })
-    });
+                })
+            })
+    }
 </script>
 </body>
 </html>
