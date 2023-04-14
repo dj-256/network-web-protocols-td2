@@ -30,6 +30,12 @@ app.MapGet("/age", () =>
     return Results.Text(fileContent, "text/html"); // return the HTML file with a MIME type of text/html
 });
 
+app.MapGet("/content-length", () =>
+{
+    var fileContent = File.ReadAllText("./content-length.html"); // read the contents of the HTML file
+    return Results.Text(fileContent, "text/html"); // return the HTML file with a MIME type of text/html
+});
+
 app.MapPost("/api/stats/content-length", async (HttpContext context) =>
 {
     var urls = await context.Request.ReadFromJsonAsync<string[]>() ?? Array.Empty<string>();

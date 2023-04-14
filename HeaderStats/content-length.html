@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Website stats</title>
+    <title>Content length stats</title>
     <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
           integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" rel="stylesheet">
 </head>
@@ -13,11 +13,12 @@
     <a class="nav-link" href="http://localhost:5009/content-length">Content Length</a>
 </nav>
 <div class="d-flex container flex-column align-items-center justify-content-center">
-    <h1 class="my-5">Server header stats</h1>
+    <h1 class="my-5">Content length stats</h1>
     <input accept=".txt" class="mb-3" id="file-selector" type="file">
     <div class="d-none mt-3" id="loading-indicator">Loading...</div>
-    <div class="d-flex col-6 justify-items-center">
-        <canvas id="myChart"></canvas>
+    <div class="d-flex flex-column col-6 justify-items-center">
+        <div class="h2" id="mean"></div>
+        <div class="h2" id="median"></div>
     </div>
     <table class="table mt-5 d-none" id="website-table">
         <thead>
@@ -44,9 +45,6 @@
 
     fileSelector.addEventListener('change', (event) => {
         console.log("File selected")
-        if (chart) {
-            chart.destroy();
-        }
         if (event.target.files.length === 0) return;
         const fileList = event.target.files;
         const reader = new FileReader();
@@ -59,7 +57,7 @@
 
     const onTrigger = () => {
         document.querySelector('#loading-indicator').classList.remove('d-none');
-        fetch('http://localhost:5009/api/stats/server', {
+        fetch('http://localhost:5009/api/stats/content-length', {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json'
@@ -69,44 +67,24 @@
             ),
         })
             .then(response => response.json())
-            .then(response => {
-                const stats = response.serverStats;
-                labels = Object.keys(stats);
-                data = Object.values(stats);
-                return response
-            }).then((response) => {
-            document.querySelector('#loading-indicator').classList.add('d-none');
-            const websiteList = document.getElementById('website-list');
-            websiteList.innerHTML = '';
-            const websiteTable = document.getElementById('website-table');
-            websiteTable.classList.remove('d-none');
-            Object.entries(response.serverStats).forEach((server, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${websites[index]}</td>
+            .then((response) => {
+                const meanElement = document.getElementById('mean');
+                meanElement.innerHTML = `Mean: ${response.averageContentLength}`;
+                const medianElement = document.getElementById('median');
+                medianElement.innerHTML = `Median: ${response.medianContentLength}`;
+                console.log(response)
+                document.querySelector('#loading-indicator').classList.add('d-none');
+                const websiteList = document.getElementById('website-list');
+                websiteList.innerHTML = '';
+                const websiteTable = document.getElementById('website-table');
+                websiteTable.classList.remove('d-none');
+                response.websites.forEach((server, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
                     <td>${server}</td>
+                    <td>${response.contentLengths[server]}</td>
                 `;
-                websiteList.appendChild(row);
-            })
-        })
-            .then(() => {
-                chart = new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Stats',
-                            data: data,
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        }
-                    }
+                    websiteList.appendChild(row);
                 })
             })
     }
